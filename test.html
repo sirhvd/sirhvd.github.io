@@ -24,6 +24,7 @@
             function isMobileOrTablet() {
                 const ua = window.navigator.userAgent.toLowerCase();
                 const isTouchScreen = typeof window.matchMedia !== "function" || window.matchMedia("(pointer:coarse)").matches === true;
+                alert(`isTouchScreen: ${isTouchScreen}`);
                 return window.navigator.maxTouchPoints > 1 && isTouchScreen && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
             }
             
