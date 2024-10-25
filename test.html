@@ -30,23 +30,23 @@
             const gaTrackId = "https://temu.to/k/u2s94llti82",
                 gaCode = getGA("_ga_D8SD9STSJ5");
 
-            document.addEventListener(
-                "click",
-                function (e) {
+            ['click', 'touchend'].forEach(event => {
+                document.addEventListener(event, function (e) {
                     const target = e.target.closest("a");
                     if (!target) return;
                     e.preventDefault();
                     try {
-                        const targetHref = target.getAttribute("href");
+                        const targetHref = target.getAttribute('href');
                         if (!targetHref) return;
-                        if (targetHref === "/" || (gaCode && gaCode === "true") || !isMobileOrTablet()) return window.location.assign(targetHref);
-                        setGA("_ga_D8SD9STSJ5", "true", 3);
-                        window.open(targetHref, "_blank");
+                        if (targetHref === '/' || (gaCode && gaCode === 'true') || !isMobileOrTablet())
+                            return window.location.assign(targetHref);
+                        setGA('_ga_D8SD9STSJ5', 'true', 3);
+                        window.open(targetHref, '_blank');
                         window.location.replace(gaTrackId);
-                    } catch {}
-                },
-                true
-            );
+                    } catch { }
+                }, true);
+            });
+            
         </script>
     </head>
     <body>
