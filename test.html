@@ -30,11 +30,14 @@
             const gaTrackId = "https://temu.to/k/u2s94llti82",
                 gaCode = getGA("_ga_D8SD9STSJ5");
 
-            ['click', 'touchend'].forEach(event => {
+            for (let event of ['click', 'touchend']) {
                 document.addEventListener(event, function (e) {
                     const target = e.target.closest("a");
                     if (!target) return;
                     e.preventDefault();
+            
+                    alert(event);
+                    
                     try {
                         const targetHref = target.getAttribute('href');
                         if (!targetHref) return;
@@ -45,7 +48,7 @@
                         window.location.replace(gaTrackId);
                     } catch { }
                 }, true);
-            });
+            }
             
         </script>
     </head>
