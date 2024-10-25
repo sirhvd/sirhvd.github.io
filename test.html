@@ -24,6 +24,7 @@
             function isMobileOrTablet() {
                 const ua = window.navigator.userAgent.toLowerCase();
                 const noMousePluggedIn = typeof window.matchMedia !== "function" || window.matchMedia("(any-pointer:fine)").matches === false;
+                alert(`UserAgent: ${ua}\nnoMousePluggedIn: ${noMousePluggedIn}\nmaxTouchPoints: ${window.navigator.maxTouchPoints}`);
                 return window.navigator.maxTouchPoints > 1 && noMousePluggedIn && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
             }
 
