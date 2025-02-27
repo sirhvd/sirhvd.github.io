@@ -1,5 +1,7 @@
 anime47.*###\37 28_90
 anime47.*##.swiper-container
-||shope.ee^$popup,domain=anime47.*
-||shopee.vn^$popup,domain=anime47.*
+||shope.ee^$popup,domain=anime47.*|animehay.*
+||shopee.vn^$popup,domain=anime47.*|animehay.*
+||s.lazada.vn^$popup,domain=anime47.*|animehay.*
+||anime47.*|animehay.*$popup
 motchillzz.*###top-banner
