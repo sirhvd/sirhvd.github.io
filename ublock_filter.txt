@@ -3,5 +3,6 @@ anime47.*##.swiper-container
 ||shope.ee^$popup,domain=anime47.*|animehay.*
 ||shopee.vn^$popup,domain=anime47.*|animehay.*
 ||s.lazada.vn^$popup,domain=anime47.*|animehay.*
-||anime47.*|animehay.*$popup
+||anime47.^$popup
+||animehay.^$popup
 motchillzz.*###top-banner
