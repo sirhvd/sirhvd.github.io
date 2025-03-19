@@ -1,8 +1,11 @@
 anime47.*###\37 28_90
 anime47.*##.swiper-container
-||shope.ee^$popup,domain=anime47.*|animehay.*
-||shopee.vn^$popup,domain=anime47.*|animehay.*
-||s.lazada.vn^$popup,domain=anime47.*|animehay.*
-||anime47.^$popup
-||animehay.^$popup
+
+||shope.ee^$popup,script,domain=anime47.*|animehay.*
+||shopee.vn^$popup,script,domain=anime47.*|animehay.*
+||s.lazada.vn^$popup,script,domain=anime47.*|animehay.*
+||lazada.vn^$popup,script,domain=anime47.*|animehay.*
+anime47.*##+js(window.open-defuser, /(shopee\.vn|shope\.ee|lazada\.vn|s\.lazada\.vn)/)
+animehay.*##+js(window.open-defuser, /(shopee\.vn|shope\.ee|lazada\.vn|s\.lazada\.vn)/)
+
 motchillzz.*###top-banner
