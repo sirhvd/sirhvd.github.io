@@ -112,8 +112,9 @@
   background: #0e3351db;
 }
 
-.visual-refresh [class^="sidebarList_"]:hover .container__2637a {
-  margin-bottom: 0 !important;
+.visual-refresh.theme-dark .container__2637a, 
+.visual-refresh .privateChannels__35e86, .nav__551b0 {
+    margin-bottom: 0 !important;
 }
 
 .visual-refresh [class*="guilds"] {
@@ -152,7 +153,7 @@
 .visual-refresh [class^="container_"] [class^="membersWrap_"] {
   position: fixed; /* Remove if you don't want it to float */
   height: 100%;
-  opacity: 0%;
+  opacity: 15%;
   z-index: 999;
   right: -260px;
 /*top: 80px;  /* Add/change this according to your desktop/client */
@@ -160,9 +161,11 @@
   transition-property: right, opacity;
   transition-duration: .5s;
   transition-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);
+  border-left: 1px solid var(--text-feedback-positive);
 }
 
 .visual-refresh [class^="container_"] [class^="membersWrap_"]:hover {
   right: 0px;
   opacity: 100%;
+  border-left: none;
 }
