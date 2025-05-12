@@ -96,7 +96,7 @@
 
         nav a:hover,
         nav a.active {
-            background: #919191;
+            background: #ff5555;
             color: white;
             transform: translateY(-2px);
         }
@@ -207,7 +207,7 @@
             Object.entries(videoGroups).forEach(([chessCount, videos]) => {
                 const targetId = `end-row-${chessCount}`;
                 navContainer.insertAdjacentHTML('beforeend',
-                    `<a href="#${targetId}" data-target="${targetId}">Có ${chessCount} quân cờ hàng trên cùng</a>`
+                    `<a data-target="${targetId}">Có ${chessCount} quân cờ hàng trên cùng</a>`
                 );
 
                 container.insertAdjacentHTML('beforeend', `
@@ -260,7 +260,6 @@
             closePopup.addEventListener('click', closePopupHandler);
             videoPopup.addEventListener('click', (e) => e.target === videoPopup && closePopupHandler());
 
-            // Scroll spy
             const navLinks = document.querySelectorAll('nav a');
             const sections = document.querySelectorAll('[id^="end-row"]');
             window.addEventListener('scroll', () => {
@@ -272,6 +271,23 @@
                     link.classList.toggle('active', link.getAttribute('data-target') === currentSection);
                 });
             });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('data-target');
+                    document.getElementById(targetId).scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+
+            // Force reset scroll on refresh
+            window.onbeforeunload = function () {
+                window.scrollTo(0, 0);
+            };
+
         });
     </script>
 </body>
