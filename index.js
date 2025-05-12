@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    
+    <link rel="preconnect" href="https://i.ytimg.com/" crossorigin="true">
+    <link rel="preconnect" href="https://s.ytimg.com" crossorigin="true">
+    <link rel="preconnect" href="https://www.youtube-nocookie.com" crossorigin="true">
+    
+    <title>Chess | Nobody - The Turnaround</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #e0e0e0;
+            padding: 30px;
+            max-width: 1400px;
+            margin: auto;
+            scroll-behavior: smooth;
+        }
+
+        h1,
+        h2 {
+            color: #fff;
+            border-bottom: 2px solid #444;
+            padding-bottom: 5px;
+        }
+
+        h2 {
+            margin-top: 40px;
+            scroll-margin-top: 80px;
+        }
+
+        .group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .video {
+            overflow: hidden;
+            background: #1e1e1e;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .video:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid #e0e0e0;
+        }
+
+        .video img {
+            width: 564px;
+            height: 626px;
+            object-fit: none;
+            object-position: -356px -36px;
+            transition: transform 0.3s ease;
+        }
+
+        .scaled-sd {
+            transform: scale(2.0);
+            object-position: -38px 77px !important;
+        }
+
+        .scaled-hq {
+            transform: scale(2.65);
+            object-position: 43px 137px !important;
+        }
+
+        .nav-container {
+            position: sticky;
+            top: 0;
+            background: #1e1e1e;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border-bottom: 1px solid #333;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            padding: 8px 15px;
+            background: #333;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            border: 1px solid #444;
+        }
+
+        nav a:hover,
+        nav a.active {
+            background: #ff5555;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .popup-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-content {
+            position: relative;
+            width: 75%;
+            max-width: 1440px;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            background: #ff0000;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            z-index: 1001;
+        }
+
+        .close-popup:hover {
+            background: #ff3333;
+            transform: scale(1.1);
+        }
+
+        #youtubePlayer {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            background: #000;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        }
+
+        #youtubePlayer iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Nobody - The Turnaround</h1>
+    <div class="nav-container">
+        <nav id="group-nav"></nav>
+    </div>
+    <div id="video-container"></div>
+    <div class="popup-overlay" id="videoPopup">
+        <div class="popup-content">
+            <span class="close-popup">&times;</span>
+            <div id="youtubePlayer"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoGroups = {
+                "1": ["K2PZg_7FPfY", "sT---sqIqls", "LQ_DTElv3wA", "5Pc3gh_5fpg", "-gPF-Edy7vs", "V6Rtg-L3qJw", "VpoaxbWtR2U", "2lx_TX4HcBQ"],
+                "2": ["0m8B4Qh1Kb8", "uN0qhY0BHUo", "CPPny_CKiWw", "3LVEqe_ibYs", "gXq8wgAmxTc", "4Tc8VLQ69ZE", "nnGbdai8JDU", "ESor3B3bSmE"],
+                "3": ["qD0_5Tj-Ofs", "7WcI2o5uslg", "e4fBS7G8KLI", "NQ2IfbziWik", "vJH9LNnKBZk", "m4dY141RNJA", "dlNpBoncp9g", "Oxll_hZDhjM", "SkA9KUJklvg", "1RlZy3ehtW0", "dkXhIQHxXH8", "vDKgjgtaoJA", "cH2yzfav0eM", "KuexmSKyEq0"],
+                "4": ["zAby1oqwFeo", "HDAuFCEXkcI", "xB-oYk2PDI4", "ghB9EcAFkG4", "SIqr4aF2INs", "yxqY89HCphM", "ruhfI9hIumU"]
+            };
+
+            const container = document.getElementById('video-container');
+            const navContainer = document.getElementById('group-nav');
+            const videoPopup = document.getElementById('videoPopup');
+            const youtubePlayer = document.getElementById('youtubePlayer');
+            const closePopup = document.querySelector('.close-popup');
+
+            // Generate navigation and video groups
+            Object.entries(videoGroups).forEach(([chessCount, videos]) => {
+                const targetId = `end-row-${chessCount}`;
+                navContainer.insertAdjacentHTML('beforeend',
+                    `<a data-target="${targetId}">Có ${chessCount} quân cờ hàng trên cùng</a>`
+                );
+
+                container.insertAdjacentHTML('beforeend', `
+                    <h2 id="${targetId}">Có ${chessCount} quân cờ hàng trên cùng</h2>
+                    <div class="group">
+                        ${videos.map(videoId => `
+                            <div class="video" data-video-id="${videoId}">
+                                <img src="https://img.youtube.com/vi/${videoId}/maxresdefault.jpg">
+                            </div>
+                        `).join('')}
+                    </div>
+                `);
+            });
+
+            // Handle image fallback
+            document.querySelectorAll('img').forEach(img => {
+                img.onload = function () {
+                    if (img.naturalWidth === 120 && img.naturalHeight === 90) {
+                        if (img.src.includes('sddefault.jpg')) {
+                            img.src = img.src.replace('sddefault.jpg', 'hqdefault.jpg');
+                            img.classList.replace('scaled-sd', 'scaled-hq');
+                        } else if (img.src.includes('maxresdefault.jpg')) {
+                            img.src = img.src.replace('maxresdefault.jpg', 'sddefault.jpg');
+                            img.classList.add('scaled-sd');
+                        }
+                    }
+                };
+            });
+
+            // Video popup functionality
+            document.querySelectorAll('.video').forEach(video => {
+                video.addEventListener('click', () => {
+                    const videoId = video.getAttribute('data-video-id');
+                    youtubePlayer.innerHTML = `
+                        <iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&mute=1&cc_load_policy=0" 
+                                frameborder="0" 
+                                allowfullscreen>
+                        </iframe>`;
+                    videoPopup.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
+            });
+
+            // Close popup handlers
+            const closePopupHandler = () => {
+                videoPopup.classList.remove('active');
+                youtubePlayer.innerHTML = '';
+                document.body.style.overflow = 'auto';
+            };
+            closePopup.addEventListener('click', closePopupHandler);
+            videoPopup.addEventListener('click', (e) => e.target === videoPopup && closePopupHandler());
+
+            const navLinks = document.querySelectorAll('nav a');
+            const sections = document.querySelectorAll('[id^="end-row"]');
+            window.addEventListener('scroll', () => {
+                let currentSection = '';
+                sections.forEach(section => {
+                    if (window.scrollY >= section.offsetTop - 100) currentSection = section.id;
+                });
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('data-target') === currentSection);
+                });
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('data-target');
+                    document.getElementById(targetId).scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+
+            // Force reset scroll on refresh
+            window.onbeforeunload = function () {
+                window.scrollTo(0, 0);
+            };
+
+        });
+    </script>
+</body>
+
+</html>
