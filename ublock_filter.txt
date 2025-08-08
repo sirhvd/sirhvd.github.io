@@ -9,3 +9,6 @@ anime47.*##+js(window.open-defuser, /(shopee\.vn|shope\.ee|lazada\.vn|s\.lazada\
 animehay.*##+js(window.open-defuser, /(shopee\.vn|shope\.ee|lazada\.vn|s\.lazada\.vn)/)
 
 motchillzz.*###top-banner
+
+www.rophim.*##.is-demo.display-single
+www.rophim.*##.swiper-slide:has(.sspp-area.is-poster)
