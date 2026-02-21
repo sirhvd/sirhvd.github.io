@@ -16,5 +16,4 @@ animehay.*|anime47.*##+js(noopener)
 
 motchillzz.*###top-banner
 
-www.rophim.*##.is-demo.display-single
-www.rophim.*##.swiper-slide:has(.sspp-area.is-poster)
+rophimm.net##.is-demo.display-single
