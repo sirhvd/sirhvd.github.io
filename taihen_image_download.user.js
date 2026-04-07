@@ -8,9 +8,10 @@
 // @match       https://*.hentai.name/g/*
 // @grant       GM_xmlhttpRequest
 // @connect     *
+// @version     1.0
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
-// @downloadURL https://update.greasyfork.org/scripts/431691/Bypass%20All%20Shortlinks.user.js
-// @updateURL   https://update.greasyfork.org/scripts/431691/Bypass%20All%20Shortlinks.meta.js
+// @downloadURL https://api.github.com/repos/sirhvd/sirhvd.github.io/contents/taihen_image_download.user.js?ref=main
+// @updateURL   https://api.github.com/repos/sirhvd/sirhvd.github.io/contents/taihen_image_download.meta.js?ref=main
 // @author      HVD
 // ==/UserScript==
 
