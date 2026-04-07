@@ -10,8 +10,8 @@
 // @connect     *
 // @version     1.0
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
-// @downloadURL https://api.github.com/repos/sirhvd/sirhvd.github.io/contents/taihen_image_download.user.js?ref=main
-// @updateURL   https://api.github.com/repos/sirhvd/sirhvd.github.io/contents/taihen_image_download.meta.js?ref=main
+// @downloadURL https://api.github.com/repos/sirhvd/sirhvd.github.io/contents/taihen_image_download.user.js
+// @updateURL   https://api.github.com/repos/sirhvd/sirhvd.github.io/contents/taihen_image_download.meta.js
 // @author      HVD
 // ==/UserScript==
 
