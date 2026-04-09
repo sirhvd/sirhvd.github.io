@@ -9,7 +9,7 @@
 // @match       https://allporncomic.com/porncomic/*/*
 // @grant       GM_xmlhttpRequest
 // @connect     *
-// @version     1.2
+// @version     1.2.1
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -120,9 +120,10 @@
     };
 
     const bearSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="20" height="20"><circle cx="110" cy="140" r="70" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="95" cy="125" r="35" fill="#77b3d4"/><circle cx="390" cy="140" r="70" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="405" cy="125" r="35" fill="#77b3d4"/><circle cx="250" cy="270" r="190" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="250" cy="340" r="95" fill="#ffffff" stroke="#000" stroke-width="20"/><path d="M 150 225 L 220 225 C 220 265, 150 265, 150 225 Z" fill="#000"/><path d="M 280 225 L 350 225 C 350 265, 280 265, 280 225 Z" fill="#000"/><path d="M 225 285 C 240 280, 260 280, 275 285 C 285 300, 265 310, 250 310 C 235 310, 215 300, 225 285 Z" fill="#000"/><line x1="250" y1="305" x2="250" y2="345" stroke="#000" stroke-width="15" stroke-linecap="round"/><line x1="215" y1="345" x2="285" y2="345" stroke="#000" stroke-width="18" stroke-linecap="round"/></svg>`;
+    const loopySvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="20" height="20"><path d="M 250 100 Q 260 50 280 40 Q 265 60 255 100 Z" fill="#eb6b56"/><path d="M 245 90 Q 230 60 260 70 Q 250 80 245 90 Z" fill="#eb6b56"/><circle cx="120" cy="150" r="35" fill="#fca1b0"/><circle cx="120" cy="145" r="15" fill="#e8eef2"/><circle cx="380" cy="150" r="35" fill="#fca1b0"/><circle cx="380" cy="145" r="15" fill="#e8eef2"/><path d="M 150 150 C 200 120 300 120 350 150 C 420 220 480 350 350 450 C 300 480 200 480 150 450 C 20 350 80 220 150 150 Z" fill="#ff94a5"/><circle cx="190" cy="260" r="20" fill="#2b0a0a"/><circle cx="185" cy="255" r="5" fill="#ffffff"/><circle cx="310" cy="260" r="20" fill="#2b0a0a"/><circle cx="305" cy="255" r="5" fill="#ffffff"/><ellipse cx="250" cy="320" rx="45" ry="35" fill="#4a0f35"/><ellipse cx="240" cy="305" rx="15" ry="8" fill="#a2578b" opacity="0.6"/><path d="M 210 390 Q 250 410 290 390" stroke="#3d141e" stroke-width="20" stroke-linecap="round" fill="none"/><rect x="235" y="380" width="30" height="15" rx="5" fill="#ffffff"/></svg>`;
 
     const btn = document.createElement('button');
-    btn.innerHTML = `${bearSvg} <span id="btn-text-content">Download ZIP</span>`;
+    btn.innerHTML = `${bearSvg} <span id="btn-text-content">Download ZIP</span> ${loopySvg}`;
     btn.id = 'custom-btn-download';
     btn.style.cssText = `
         position: fixed; bottom: 10px; right: 10px; z-index: 9999;
