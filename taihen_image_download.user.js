@@ -9,7 +9,7 @@
 // @match       https://allporncomic.com/porncomic/*/*
 // @grant       GM_xmlhttpRequest
 // @connect     *
-// @version     1.1
+// @version     1.2
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -81,6 +81,11 @@
     const currentConfig = siteConfigs.find(site => site.match(host));
     if (!currentConfig) return;
 
+    const updateBtnText = (text) => {
+        const textSpan = document.getElementById('btn-text-content');
+        if (textSpan) textSpan.innerText = text;
+    };
+
     const fetchImageData = (url) => {
         return new Promise((resolve) => {
             GM_xmlhttpRequest({
@@ -98,7 +103,7 @@
 
     const createZipAsync = (zipData, filename, btnEl) => {
         return new Promise((resolve, reject) => {
-            btnEl.innerHTML = `Đang nén ${filename}...`;
+            updateBtnText(`Đang nén ${filename}...`);
             fflate.zip(zipData, { level: 0 }, (err, zipped) => {
                 if (err) return reject(err);
 
@@ -114,15 +119,18 @@
         });
     };
 
+    const bearSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="20" height="20"><circle cx="110" cy="140" r="70" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="95" cy="125" r="35" fill="#77b3d4"/><circle cx="390" cy="140" r="70" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="405" cy="125" r="35" fill="#77b3d4"/><circle cx="250" cy="270" r="190" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="250" cy="340" r="95" fill="#ffffff" stroke="#000" stroke-width="20"/><path d="M 150 225 L 220 225 C 220 265, 150 265, 150 225 Z" fill="#000"/><path d="M 280 225 L 350 225 C 350 265, 280 265, 280 225 Z" fill="#000"/><path d="M 225 285 C 240 280, 260 280, 275 285 C 285 300, 265 310, 250 310 C 235 310, 215 300, 225 285 Z" fill="#000"/><line x1="250" y1="305" x2="250" y2="345" stroke="#000" stroke-width="15" stroke-linecap="round"/><line x1="215" y1="345" x2="285" y2="345" stroke="#000" stroke-width="18" stroke-linecap="round"/></svg>`;
+
     const btn = document.createElement('button');
-    btn.innerHTML = 'Download ZIP (GẤU)';
+    btn.innerHTML = `${bearSvg} <span id="btn-text-content">Download ZIP</span>`;
     btn.id = 'custom-btn-download';
     btn.style.cssText = `
         position: fixed; bottom: 10px; right: 10px; z-index: 9999;
-        padding: 10px 20px; background: #007bff; color: white;
+        padding: 10px 10px; background: #007bff; color: white;
         border: none; border-radius: 5px; cursor: pointer;
         font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         transition: 0.3s;
+        display: flex; align-items: center; gap: 4px;
     `;
     document.body.appendChild(btn);
 
@@ -134,14 +142,15 @@
         btn.disabled = true;
 
         if (typeof currentConfig.beforeQuery=== 'function') {
-            btn.innerHTML = 'Đang xử lý trang...';
+            updateBtnText('Đang xử lý trang...');
             try { await currentConfig.beforeQuery(); } catch (e) { console.error(e); }
         }
 
         const imgs = document.querySelectorAll(currentConfig.imgSelector);
         if (!imgs.length) {
             alert('Không tìm thấy ảnh nào!');
-            btn.disabled = false; btn.innerHTML = 'Download ZIP';
+            btn.disabled = false;
+            updateBtnText('Download ZIP');
             return;
         }
 
@@ -213,7 +222,7 @@
                     }
 
                     completedInChunk++;
-                    btn.innerHTML = `Đang tải ${needsChunking ? `Part ${partNumber}` : 'ảnh'}... (${completedInChunk}/${chunk.length}) - Lỗi: ${globalErrorCount}`;
+                    updateBtnText(`Đang tải ${needsChunking ? `Part ${partNumber}` : 'ảnh'}... (${completedInChunk}/${chunk.length}) - Lỗi: ${globalErrorCount}`);
 
                     activeWorkers--;
                     nextTask();
@@ -239,11 +248,11 @@
         if (globalSuccessCount === 0) {
             alert('Không có ảnh nào tải thành công. Vui lòng kiểm tra lại!');
         } else {
-            btn.innerHTML = globalErrorCount > 0 ? `Xong! (Lỗi ${globalErrorCount} ảnh)` : 'Hoàn tất 100%!';
+            updateBtnText(globalErrorCount > 0 ? `Xong! (Lỗi ${globalErrorCount} ảnh)` : 'Xong!');
         }
 
         setTimeout(() => {
-            btn.innerHTML = 'Download ZIP';
+            updateBtnText('Download ZIP');
             btn.disabled = false;
         }, 4000);
     };
