@@ -9,7 +9,7 @@
 // @match       https://allporncomic.com/porncomic/*/*
 // @grant       GM_xmlhttpRequest
 // @connect     *
-// @version     1.1
+// @version     1.2
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
