@@ -8,8 +8,9 @@
 // @match       https://nhentai.xxx/*
 // @match       https://allporncomic.com/*
 // @match       https://kissmanga.in/kissmanga/*/*/
+// @match       https://asmhentai.com/*
 // @grant       GM_xmlhttpRequest
-// @version     1.4
+// @version     1.5
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -19,7 +20,7 @@
 (async function () {
     'use strict';
 
-    const MAX_PER_ZIP = 200;
+    const MAX_PER_ZIP = 250;
     const MAX_CONCURRENT = 5;
 
     const siteConfigs = [
@@ -76,6 +77,20 @@
             imgSelector: '.reading-content img.wp-manga-chapter-img',
             titleSelector: 'title',
             showWhen: (url) => /\/kissmanga\/[a-zA-Z0-9\-]+\/[a-zA-Z0-9\-]+\/?$/.test(url.split(/[?#]/)[0]),
+        },
+        {
+            match: (host) => host.includes('asmhentai.com'),
+            imgSelector: '#append_thumbs img',
+            titleSelector: 'title',
+            showWhen: (url) => /\/g\/\d+\/?$/.test(url.split(/[?#]/)[0]),
+            beforeQuery: async () => {
+                document.querySelector('#load_all').click();
+                await new Promise(r => setTimeout(r, 2000));
+            },
+            processUrls: (url) => {
+                const baseUrl = url.replace(/t\.(?:jpg|jpeg|png|webp)(?:\?.*)?$/i, '');
+                return ['.png', '.webp', '.jpg', '.jpeg'].map(ext => baseUrl + ext);
+            },
         },
     ];
 
