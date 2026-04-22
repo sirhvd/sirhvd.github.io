@@ -11,7 +11,7 @@
 // @match       https://asmhentai.com/*
 // @match       https://www.pixiv.net/*
 // @grant       GM_xmlhttpRequest
-// @version     1.6.1
+// @version     1.6.2
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -59,8 +59,11 @@
             titleSelector: '.info h1',
             showWhen: (url) => /\/g\/\d+\/?$/.test(url.split(/[?#]/)[0]),
             beforeQuery: async () => {
-                document.querySelector('#show_all')?.click();
-                await new Promise(r => setTimeout(r, 2000));
+                const showAllBtn = document.querySelector('#show_all');
+                if (showAllBtn) {
+                    showAllBtn.click();
+                    await new Promise(r => setTimeout(r, 2000));
+                }
             },
             processUrls: (url) => {
                 const baseUrl = url.replace(/t\.(?:jpg|jpeg|png|webp)(?:\?.*)?$/i, '');
@@ -85,8 +88,11 @@
             titleSelector: 'title',
             showWhen: (url) => /\/g\/\d+\/?$/.test(url.split(/[?#]/)[0]),
             beforeQuery: async () => {
-                document.querySelector('#load_all')?.click();
-                await new Promise(r => setTimeout(r, 2000));
+                const showAllBtn = document.querySelector('#load_all');
+                if (showAllBtn) {
+                    showAllBtn.click();
+                    await new Promise(r => setTimeout(r, 2000));
+                }
             },
             processUrls: (url) => {
                 const baseUrl = url.replace(/t\.(?:jpg|jpeg|png|webp)(?:\?.*)?$/i, '');
@@ -99,8 +105,11 @@
             titleSelector: 'h1',
             showWhen: (url) => /\/artworks\/\d+\/?$/.test(url.split(/[?#]/)[0]),
             beforeQuery: async () => {
-                document.querySelector('.sc-f8e29b57-2.kvdUWZ')?.click();
-                await new Promise(r => setTimeout(r, 2000));
+                const showAllBtn = document.querySelector('.sc-f8e29b57-2.kvdUW');
+                if (showAllBtn) {
+                    showAllBtn.click();
+                    await new Promise(r => setTimeout(r, 2000));
+                }
             },
         },
     ];
