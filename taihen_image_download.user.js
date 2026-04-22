@@ -11,7 +11,7 @@
 // @match       https://asmhentai.com/*
 // @match       https://www.pixiv.net/*
 // @grant       GM_xmlhttpRequest
-// @version     1.6
+// @version     1.6.1
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -59,7 +59,7 @@
             titleSelector: '.info h1',
             showWhen: (url) => /\/g\/\d+\/?$/.test(url.split(/[?#]/)[0]),
             beforeQuery: async () => {
-                document.querySelector('#show_all').click();
+                document.querySelector('#show_all')?.click();
                 await new Promise(r => setTimeout(r, 2000));
             },
             processUrls: (url) => {
@@ -85,7 +85,7 @@
             titleSelector: 'title',
             showWhen: (url) => /\/g\/\d+\/?$/.test(url.split(/[?#]/)[0]),
             beforeQuery: async () => {
-                document.querySelector('#load_all').click();
+                document.querySelector('#load_all')?.click();
                 await new Promise(r => setTimeout(r, 2000));
             },
             processUrls: (url) => {
@@ -95,11 +95,11 @@
         },
         {
             match: (host) => host.includes('pixiv.net'),
-            imgSelector: '.sc-7199c030-4.bDAcoO a',
-            titleSelector: 'meta[property="twitter:title"]',
+            imgSelector: 'a.gtm-expand-full-size-illust',
+            titleSelector: 'h1',
             showWhen: (url) => /\/artworks\/\d+\/?$/.test(url.split(/[?#]/)[0]),
             beforeQuery: async () => {
-                document.querySelector('.sc-f8e29b57-2.kvdUWZ').click();
+                document.querySelector('.sc-f8e29b57-2.kvdUWZ')?.click();
                 await new Promise(r => setTimeout(r, 2000));
             },
         },
@@ -137,6 +137,12 @@
                 url: url,
                 responseType: "arraybuffer",
                 timeout: 10000,
+                headers: {
+                    "Referer": window.location.origin,
+                    "Origin": window.location.origin,
+                    "User-Agent": navigator.userAgent,
+                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+                },
                 onload: (res) => resolve({ data: res.status === 200 ? new Uint8Array(res.response) : null, status: res.status }),
                 onerror: () => resolve({ data: null, status: 0 }),
                 ontimeout: () => resolve({ data: null, status: 0 }),
@@ -210,7 +216,7 @@
 
         const titleEl = currentConfig.titleSelector ? document.querySelector(currentConfig.titleSelector) : null;
 
-        let baseZipName = (titleEl ? (titleEl.textContent ?? titleEl.content): document.title)
+        let baseZipName = (titleEl ? titleEl.textContent: document.title)
           .replace(/\s+/g, ' ')
           .trim()
           .replace(/[\\/:*?"<>|]/g, '_');
@@ -245,7 +251,7 @@
                     activeWorkers++;
 
                     const { img, index: i } = task;
-                    const src = img.getAttribute('data-src') || img.getAttribute('src') || img.currentSrc;
+                    const src = img.getAttribute('data-src') || img.getAttribute('src') || img.currentSrc || img.href;
 
                     if (src) {
                         const urlsToTry = currentConfig.processUrls ? currentConfig.processUrls(src) : [src];
