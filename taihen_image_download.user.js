@@ -9,8 +9,9 @@
 // @match       https://allporncomic.com/*
 // @match       https://kissmanga.in/kissmanga/*/*/
 // @match       https://asmhentai.com/*
+// @match       https://www.pixiv.net/*
 // @grant       GM_xmlhttpRequest
-// @version     1.5
+// @version     1.6
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -90,6 +91,16 @@
             processUrls: (url) => {
                 const baseUrl = url.replace(/t\.(?:jpg|jpeg|png|webp)(?:\?.*)?$/i, '');
                 return ['.png', '.webp', '.jpg', '.jpeg'].map(ext => baseUrl + ext);
+            },
+        },
+        {
+            match: (host) => host.includes('pixiv.net'),
+            imgSelector: '.sc-7199c030-4.bDAcoO a',
+            titleSelector: 'meta[property="twitter:title"]',
+            showWhen: (url) => /\/artworks\/\d+\/?$/.test(url.split(/[?#]/)[0]),
+            beforeQuery: async () => {
+                document.querySelector('.sc-f8e29b57-2.kvdUWZ').click();
+                await new Promise(r => setTimeout(r, 2000));
             },
         },
     ];
@@ -199,7 +210,7 @@
 
         const titleEl = currentConfig.titleSelector ? document.querySelector(currentConfig.titleSelector) : null;
 
-        let baseZipName = (titleEl ? titleEl.textContent : document.title)
+        let baseZipName = (titleEl ? (titleEl.textContent ?? titleEl.content): document.title)
           .replace(/\s+/g, ' ')
           .trim()
           .replace(/[\\/:*?"<>|]/g, '_');
