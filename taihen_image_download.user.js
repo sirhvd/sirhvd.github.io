@@ -11,7 +11,7 @@
 // @match       https://asmhentai.com/*
 // @match       https://www.pixiv.net/*
 // @grant       GM_xmlhttpRequest
-// @version     1.6.3
+// @version     1.6.4
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -238,6 +238,7 @@
         let globalErrorCount = 0;
         let globalSuccessCount = 0;
         let lastSuccessfulExt = null; // Ghi nhớ đuôi ảnh để tối ưu tốc độ dò
+        let failedImages = [];
 
         const tasks = Array.from(imgs).map((img, index) => ({ img, index }));
 
@@ -320,7 +321,8 @@
                             globalSuccessCount++;
                         } else {
                             globalErrorCount++;
-                            console.warn(`Bỏ qua ảnh ${i + 1}`);
+                            failedImages.push(`Ảnh ${i + 1} - Link gốc: ${src}`);
+                            console.warn(`Bỏ qua ảnh ${i + 1} (Link: ${src})`);
                         }
                     }
 
@@ -352,6 +354,12 @@
             alert('Không có ảnh nào tải thành công. Vui lòng kiểm tra lại!');
         } else {
             updateBtnText(globalErrorCount > 0 ? `Xong! (Lỗi ${globalErrorCount} ảnh)` : 'Xong!');
+        }
+
+        if (failedImages.length > 0) {
+            console.warn('--- DANH SÁCH ẢNH TẢI LỖI ---');
+            console.warn(failedImages.join('\n'));
+            alert(`Có ${globalErrorCount} ảnh bị lỗi không tải được. Vui lòng mở Console (F12) để xem danh sách link chi tiết!`);
         }
 
         setTimeout(() => {
