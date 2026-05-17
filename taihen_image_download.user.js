@@ -11,7 +11,7 @@
 // @match       https://asmhentai.com/*
 // @match       https://www.pixiv.net/*
 // @grant       GM_xmlhttpRequest
-// @version     1.6.4
+// @version     1.6.5
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -321,8 +321,10 @@
                             globalSuccessCount++;
                         } else {
                             globalErrorCount++;
-                            failedImages.push(`Ảnh ${i + 1} - Link gốc: ${src}`);
-                            console.warn(`Bỏ qua ảnh ${i + 1} (Link: ${src})`);
+                            // Lấy URL đầu tiên đã qua xử lý (processUrls) để log
+                            const processedUrlLog = (currentConfig.processUrls ? currentConfig.processUrls(src) : [src])[0];
+                            failedImages.push(`Ảnh ${i + 1} - Link process: ${processedUrlLog}`);
+                            console.warn(`Bỏ qua ảnh ${i + 1} (Link: ${processedUrlLog})`);
                         }
                     }
 
