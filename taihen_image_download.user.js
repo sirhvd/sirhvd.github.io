@@ -11,7 +11,7 @@
 // @match       https://asmhentai.com/*
 // @match       https://www.pixiv.net/*
 // @grant       GM_xmlhttpRequest
-// @version     1.6.2
+// @version     1.6.3
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -22,7 +22,7 @@
     'use strict';
 
     const MAX_PER_ZIP = 250;
-    const MAX_CONCURRENT = 5;
+    const MAX_CONCURRENT = 15;
 
     const siteConfigs = [
         {
@@ -30,7 +30,8 @@
             imgSelector: '#gallery-pages img',
             titleSelector: '#gallery-main-info h1',
             showWhen: (url) => /\/view\/\d+\/?$/.test(url.split(/[?#]/)[0]),
-            processUrls: (url) => [url.replace(/t(\.(?:jpg|jpeg|png|webp))(?:\?.*)?$/i, '$1')]
+            processUrls: (url) => [url.replace(/t(\.(?:jpg|jpeg|png|webp))(?:\?.*)?$/i, '$1')],
+            fallbackServers: true
         },
         {
             match: (host) => host.includes('nhentai.com'),
@@ -51,7 +52,8 @@
             imgSelector: '#thumbnail-container .gallerythumb img',
             titleSelector: '#info h1',
             showWhen: (url) => /\/g\/\d+\/?$/.test(url.split(/[?#]/)[0]),
-            processUrls: (url) => [url.replace(/\/\/t(\d+)/, '//i$1').replace(/t(\.[a-zA-Z]+)$/, '$1')]
+            processUrls: (url) => [url.replace(/\/\/t(\d+)/, '//i$1').replace(/t(\.[a-zA-Z]+)$/, '$1')],
+            fallbackServers: true
         },
         {
             match: (host) => host.includes('nhentai.xxx'),
@@ -68,7 +70,8 @@
             processUrls: (url) => {
                 const baseUrl = url.replace(/t\.(?:jpg|jpeg|png|webp)(?:\?.*)?$/i, '');
                 return ['.png', '.webp', '.jpg', '.jpeg'].map(ext => baseUrl + ext);
-            }
+            },
+            fallbackServers: true
         },
         {
             match: (host) => host.includes('allporncomic.com'),
@@ -182,7 +185,7 @@
 
         const wrapHistoryMethod = (method) => {
             const original = history[method];
-            history[method] = function(...args) {
+            history[method] = function (...args) {
                 const result = original.apply(this, args);
                 window.dispatchEvent(new Event('urlchange'));
                 return result;
@@ -210,7 +213,7 @@
     btn.onclick = async () => {
         btn.disabled = true;
 
-        if (typeof currentConfig.beforeQuery=== 'function') {
+        if (typeof currentConfig.beforeQuery === 'function') {
             updateBtnText('Đang xử lý trang...');
             try { await currentConfig.beforeQuery(); } catch (e) { console.error(e); }
         }
@@ -225,15 +228,16 @@
 
         const titleEl = currentConfig.titleSelector ? document.querySelector(currentConfig.titleSelector) : null;
 
-        let baseZipName = (titleEl ? titleEl.textContent: document.title)
-          .replace(/\s+/g, ' ')
-          .trim()
-          .replace(/[\\/:*?"<>|]/g, '_');
+        let baseZipName = (titleEl ? titleEl.textContent : document.title)
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/[\\/:*?"<>|]/g, '_');
 
         const totalImages = imgs.length;
         const needsChunking = totalImages > MAX_PER_ZIP;
         let globalErrorCount = 0;
         let globalSuccessCount = 0;
+        let lastSuccessfulExt = null; // Ghi nhớ đuôi ảnh để tối ưu tốc độ dò
 
         const tasks = Array.from(imgs).map((img, index) => ({ img, index }));
 
@@ -263,20 +267,50 @@
                     const src = img.getAttribute('data-src') || img.getAttribute('src') || img.currentSrc || img.href;
 
                     if (src) {
-                        const urlsToTry = currentConfig.processUrls ? currentConfig.processUrls(src) : [src];
+                        let urlsToTry = currentConfig.processUrls ? currentConfig.processUrls(src) : [src];
+                        const originalUrlsCount = urlsToTry.length;
+
+                        if (lastSuccessfulExt && urlsToTry.length > 1) {
+                            urlsToTry.sort((a, b) => {
+                                const aHasExt = a.includes(lastSuccessfulExt);
+                                const bHasExt = b.includes(lastSuccessfulExt);
+                                if (aHasExt && !bHasExt) return -1;
+                                if (!aHasExt && bHasExt) return 1;
+                                return 0;
+                            });
+                        }
+
+                        if (currentConfig.fallbackServers && urlsToTry.length > 0) {
+                            const match = urlsToTry[0].match(/\/\/([a-z]+)(\d*)\./i);
+                            if (match) {
+                                const [_, prefix, num] = match;
+                                const subdomains = [prefix + num, ...['1', '2', '3', '4', '5'].filter(n => n !== num).map(n => prefix + n)];
+                                urlsToTry = subdomains.flatMap(sub => urlsToTry.map(u => u.replace(`//${prefix + num}.`, `//${sub}.`)));
+                            }
+                        }
+
                         let downloadedData = null;
                         let finalUrl = '';
 
-                        for (const targetUrl of urlsToTry) {
-                            let retries = 3;
+                        for (let urlIdx = 0; urlIdx < urlsToTry.length; urlIdx++) {
+                            const targetUrl = urlsToTry[urlIdx];
+                            let retries = urlIdx < originalUrlsCount ? 3 : 1;
+
                             while (retries > 0) {
                                 const res = await fetchImageData(targetUrl);
                                 if (res.data) { downloadedData = res.data; finalUrl = targetUrl; break; }
                                 if (res.status === 404) break;
+
                                 retries--;
                                 if (retries > 0) await new Promise(r => setTimeout(r, 2000));
                             }
-                            if (downloadedData) break;
+
+                            if (downloadedData) {
+                                // Ghi nhớ đuôi ảnh để áp dụng ưu tiên ngay cho ảnh sau
+                                const extMatch = finalUrl.match(/\.(jpg|jpeg|png|webp)/i);
+                                if (extMatch) lastSuccessfulExt = extMatch[0];
+                                break;
+                            }
                         }
 
                         if (downloadedData) {
