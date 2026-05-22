@@ -10,8 +10,9 @@
 // @match       https://kissmanga.in/kissmanga/*/*/
 // @match       https://asmhentai.com/*
 // @match       https://www.pixiv.net/*
+// @match       https://www.hentaivnx.com/*
 // @grant       GM_xmlhttpRequest
-// @version     1.6.5
+// @version     1.6.6
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -114,6 +115,12 @@
                     await new Promise(r => setTimeout(r, 2000));
                 }
             },
+        },
+        {
+            match: (host) => host.includes('hentaivnx.com'),
+            imgSelector: '.page-chapter img',
+            titleSelector: 'h1',
+            showWhen: (url) => /\/truyen-hentai\/[^\/]+\/[^\/]+\/\d+\/?$/.test(url.split(/[?#]/)[0]),
         },
     ];
 
