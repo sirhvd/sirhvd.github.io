@@ -14,7 +14,7 @@
 // @match       https://hentai18.net/*
 // @include     /^[^:]*?:\/\/[^\/]*?hentai[^\/]*?\/.*?$/
 // @grant       GM_xmlhttpRequest
-// @version     1.6.8
+// @version     1.8.3
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -130,11 +130,12 @@
             titleSelector: 'h1',
             showWhen: (url) => /\/read-hentai\/[a-zA-Z0-9\-]+?$/.test(url.split(/[?#]/)[0]),
         },
+        // Fallback config cho mọi trang có "hentai" trong tên miền
         {
             match: (host) => host.includes('hentai'),
-            imgSelector: 'img',                    // lấy tất cả ảnh
-            titleSelector: 'title',                // lấy tiêu đề trang
-            showWhen: (url) => true,               // luôn hiển thị nút
+            imgSelector: 'img',
+            titleSelector: 'title',
+            showWhen: (url) => true,
         }
     ];
 
@@ -183,7 +184,6 @@
         outline: none !important;
         transition: 0.3s;
     `;
-    // Đảm bảo khi focus/active vẫn giữ màu
     pickBtn.addEventListener('focus', () => {
         pickBtn.style.background = '#28a745';
         pickBtn.style.color = 'white';
@@ -196,19 +196,21 @@
 
     document.body.appendChild(buttonContainer);
 
-    // Hàm fetch ảnh
+    // === Hàm fetchImageData với cookie và header đầy đủ ===
     const fetchImageData = (url) => {
         return new Promise((resolve) => {
             GM_xmlhttpRequest({
                 method: "GET",
                 url: url,
                 responseType: "arraybuffer",
-                timeout: 10000,
+                timeout: 15000,
                 headers: {
-                    "Referer": window.location.origin,
+                    "Referer": window.location.href,
                     "Origin": window.location.origin,
                     "User-Agent": navigator.userAgent,
-                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                    "Cache-Control": "no-cache",
+                    "Cookie": document.cookie
                 },
                 onload: (res) => resolve({ data: res.status === 200 ? new Uint8Array(res.response) : null, status: res.status }),
                 onerror: () => resolve({ data: null, status: 0 }),
@@ -234,7 +236,7 @@
         });
     };
 
-    // Hàm tải ảnh chính
+    // === Hàm tải ảnh chính ===
     async function downloadImages(imageElements = null, mode = 'all') {
         if (isDownloading) return;
         isDownloading = true;
@@ -411,7 +413,6 @@
         }
 
         let current = img;
-        let best = current;
         let maxLevel = 3;
         let level = 0;
 
@@ -424,10 +425,7 @@
             level++;
         }
 
-        if (img.parentElement) {
-            return img.parentElement;
-        }
-        return img;
+        return img.parentElement || img;
     }
 
     // === Hàm chọn element (Picker) với tooltip hiển thị parent ===
@@ -508,7 +506,6 @@
         const onMouseMove = (e) => {
             if (!pickerActive) return;
             const el = document.elementFromPoint(e.clientX, e.clientY);
-            // Bỏ qua các phần tử là nút của script, overlay, hint, tooltip
             if (!el ||
                 el === overlay || el === hint ||
                 el.closest('#picker-overlay') || el.closest('#picker-hint') || el.closest('#picker-tooltip') ||
