@@ -14,7 +14,7 @@
 // @match       https://hentai18.net/*
 // @include     /^[^:]*?:\/\/[^\/]*?hentai[^\/]*?\/.*?$/
 // @grant       GM_xmlhttpRequest
-// @version     1.7.0
+// @version     1.7.1
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
@@ -140,7 +140,30 @@
             match: (host) => host.includes('hentai'),
             imgSelector: 'img',
             titleSelector: 'title',
-            showWhen: (url) => true,
+            showWhen: (url) => false,
+            processUrls: (url) => {
+
+                const results = new Set();
+                const baseUrl = url.replace(/t\.(?:jpg|jpeg|png|webp)(?:\?.*)?$/i, '');
+                if (baseUrl !== url) {
+                    ['.png', '.webp', '.jpg', '.jpeg'].forEach(ext => results.add(baseUrl + ext));
+                }
+
+                if (url.includes('/thumbnails/')) {
+                    results.add(url.replace('/thumbnails/', '/images/').split('?')[0]);
+                }
+
+                if (url.includes('_thumb')) {
+                    results.add(url.replace('_thumb', '').split('?')[0]);
+                }
+
+                if (/\/\/t(\d+)/.test(url)) {
+                    results.add(url.replace(/\/\/t(\d+)/, '//i$1').replace(/t(\.[a-zA-Z]+)$/, '$1'));
+                }
+
+                return Array.from(results);
+            },
+            fallbackServers: true
         }
     ];
 
@@ -151,15 +174,45 @@
     let isDownloading = false;
     let pickerActive = false;
 
-    const updateBtnText = (text) => {
-        const textSpan = document.getElementById('btn-text-content');
-        if (textSpan) textSpan.innerText = text;
+    // --- Khởi tạo Bảng hiển thị Trạng thái (Status Overlay) ---
+    const statusPanel = document.createElement('div');
+    statusPanel.id = 'download-status-panel';
+    statusPanel.style.cssText = `
+        position: fixed; bottom: 60px; right: 10px; z-index: 9999;
+        background: rgba(20, 20, 20, 0.9); color: #fff;
+        padding: 12px 16px; border-radius: 6px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        max-width: 320px; border-left: 4px solid #007bff;
+        display: none; transition: opacity 0.3s; pointer-events: none;
+    `;
+    document.body.appendChild(statusPanel);
+
+    const updateStatusText = async (text, type = 'info') => {
+        statusPanel.style.display = 'block';
+        statusPanel.innerText = text;
+
+        if (type === 'error') {
+            statusPanel.style.borderLeftColor = '#dc3545';
+        } else if (type === 'success') {
+            statusPanel.style.borderLeftColor = '#28a745';
+        } else {
+            statusPanel.style.borderLeftColor = '#007bff';
+        }
+
+        // Tạo một micro-delay giải phóng Main Thread, ép trình duyệt vẽ lại (Render) UI ngay lập tức
+        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+    };
+
+    const hideStatusPanel = (delay = 4000) => {
+        setTimeout(() => {
+            statusPanel.style.display = 'none';
+        }, delay);
     };
 
     const bearSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="20" height="20"><circle cx="110" cy="140" r="70" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="95" cy="125" r="35" fill="#77b3d4"/><circle cx="390" cy="140" r="70" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="405" cy="125" r="35" fill="#77b3d4"/><circle cx="250" cy="270" r="190" fill="#a4d3ee" stroke="#000" stroke-width="25"/><circle cx="250" cy="340" r="95" fill="#ffffff" stroke="#000" stroke-width="20"/><path d="M 150 225 L 220 225 C 220 265, 150 265, 150 225 Z" fill="#000"/><path d="M 280 225 L 350 225 C 350 265, 280 265, 280 225 Z" fill="#000"/><path d="M 225 285 C 240 280, 260 280, 275 285 C 285 300, 265 310, 250 310 C 235 310, 215 300, 225 285 Z" fill="#000"/><line x1="250" y1="305" x2="250" y2="345" stroke="#000" stroke-width="15" stroke-linecap="round"/><line x1="215" y1="345" x2="285" y2="345" stroke="#000" stroke-width="18" stroke-linecap="round"/></svg>`;
     const loopySvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="20" height="20"><path d="M 250 100 Q 260 50 280 40 Q 265 60 255 100 Z" fill="#eb6b56"/><path d="M 245 90 Q 230 60 260 70 Q 250 80 245 90 Z" fill="#eb6b56"/><circle cx="120" cy="150" r="35" fill="#fca1b0"/><circle cx="120" cy="145" r="15" fill="#e8eef2"/><circle cx="380" cy="150" r="35" fill="#fca1b0"/><circle cx="380" cy="145" r="15" fill="#e8eef2"/><path d="M 150 150 C 200 120 300 120 350 150 C 420 220 480 350 350 450 C 300 480 200 480 150 450 C 20 350 80 220 150 150 Z" fill="#ff94a5"/><circle cx="190" cy="260" r="20" fill="#2b0a0a"/><circle cx="185" cy="255" r="5" fill="#ffffff"/><circle cx="310" cy="260" r="20" fill="#2b0a0a"/><circle cx="305" cy="255" r="5" fill="#ffffff"/><ellipse cx="250" cy="320" rx="45" ry="35" fill="#4a0f35"/><ellipse cx="240" cy="305" rx="15" ry="8" fill="#a2578b" opacity="0.6"/><path d="M 210 390 Q 250 410 290 390" stroke="#3d141e" stroke-width="20" stroke-linecap="round" fill="none"/><rect x="235" y="380" width="30" height="15" rx="5" fill="#ffffff"/></svg>`;
 
-    // Tạo nút
     const buttonContainer = document.createElement('div');
     buttonContainer.style.cssText = `
         position: fixed; bottom: 10px; right: 10px; z-index: 9999;
@@ -173,32 +226,20 @@
         padding: 10px 10px; background: #007bff; color: white;
         border: none; border-radius: 5px; cursor: pointer;
         font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: 0.3s;
-        display: flex; align-items: center; gap: 4px;
+        transition: 0.3s; display: flex; align-items: center; gap: 4px;
     `;
     buttonContainer.appendChild(btn);
 
     const pickBtn = document.createElement('button');
-    pickBtn.innerHTML = '🎯 Pick Element';
+    pickBtn.innerHTML = '🎯 Chọn vùng download';
     pickBtn.id = 'pick-btn';
     pickBtn.style.cssText = `
-        padding: 10px; background: #28a745 !important;
-        color: white !important;
+        padding: 10px; background: #28a745 !important; color: white !important;
         border: none; border-radius: 5px; cursor: pointer;
         font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        outline: none !important;
-        transition: 0.3s;
+        outline: none !important; transition: 0.3s;
     `;
-    pickBtn.addEventListener('focus', () => {
-        pickBtn.style.background = '#28a745';
-        pickBtn.style.color = 'white';
-    });
-    pickBtn.addEventListener('mousedown', () => {
-        pickBtn.style.background = '#28a745';
-        pickBtn.style.color = 'white';
-    });
     buttonContainer.appendChild(pickBtn);
-
     document.body.appendChild(buttonContainer);
 
     // === Hàm fetchImageData với cookie và header đầy đủ ===
@@ -225,9 +266,9 @@
         });
     };
 
-    const createZipAsync = (zipData, filename) => {
-        return new Promise((resolve, reject) => {
-            updateBtnText(`Đang nén ${filename}...`);
+    const createZipAsync = async (zipData, filename) => {
+        return new Promise(async (resolve, reject) => {
+            await updateStatusText(`📦 Đang nén cấu trúc tập tin: ${filename}...`);
             fflate.zip(zipData, { level: 0 }, (err, zipped) => {
                 if (err) return reject(err);
                 const blob = new Blob([zipped], { type: 'application/zip' });
@@ -242,29 +283,39 @@
     };
 
     // === Hàm tải ảnh chính ===
+    // === Hàm tải ảnh chính ===
     async function downloadImages(imageElements = null, mode = 'all') {
         if (isDownloading) return;
         isDownloading = true;
         btn.disabled = true;
+        pickBtn.disabled = true;
+
+        // 1. BẬT THANH TRẠNG THÁI NGAY LẬP TỨC KHI VỪA CLICK
+        const modeTextInitial = mode === 'picker' ? 'vùng chọn' : 'toàn bộ trang';
+        await updateStatusText(`🔍 Đang khởi tạo tiến trình tải ${modeTextInitial}...`);
 
         let imgs;
         if (imageElements) {
             imgs = imageElements instanceof NodeList ? Array.from(imageElements) : imageElements;
         } else {
             if (typeof currentConfig.beforeQuery === 'function') {
-                updateBtnText('Đang xử lý trang...');
+                await updateStatusText('🔍 Đang kích hoạt các phần tử ẩn trên trang...');
                 try { await currentConfig.beforeQuery(); } catch (e) { console.error(e); }
             }
             imgs = document.querySelectorAll(currentConfig.imgSelector);
         }
 
         if (!imgs || !imgs.length) {
-            alert('Không tìm thấy ảnh nào!');
+            alert('Không tìm thấy ảnh hợp lệ nào trên vùng phân tích!');
             btn.disabled = false;
+            pickBtn.disabled = false;
             isDownloading = false;
-            updateBtnText('Download ZIP');
+            hideStatusPanel(0);
             return;
         }
+
+        // Cập nhật lại số lượng tổng để người dùng thấy rõ
+        await updateStatusText(`⚡ Đang chuẩn bị tải xuống ${imgs.length} ảnh...`);
 
         const titleEl = currentConfig.titleSelector ? document.querySelector(currentConfig.titleSelector) : null;
         let baseZipName = (titleEl ? titleEl.textContent : document.title)
@@ -280,7 +331,6 @@
         let failedImages = [];
 
         const tasks = Array.from(imgs).map((img, index) => ({ img, index }));
-
         const chunks = [];
         for (let i = 0; i < tasks.length; i += MAX_PER_ZIP) {
             chunks.push(tasks.slice(i, i + MAX_PER_ZIP));
@@ -338,6 +388,7 @@
 
                             while (retries > 0) {
                                 const res = await fetchImageData(targetUrl);
+                                if (res.data.length === 0) break;
                                 if (res.data) { downloadedData = res.data; finalUrl = targetUrl; break; }
                                 if (res.status === 404) break;
                                 retries--;
@@ -365,8 +416,9 @@
                     }
 
                     completedInChunk++;
-                    const modeText = mode === 'picker' ? 'element đã chọn' : 'toàn bộ';
-                    updateBtnText(`Đang tải ${modeText} ${needsChunking ? `Part ${partNumber}` : ''}... (${completedInChunk}/${chunk.length}) - Lỗi: ${globalErrorCount}`);
+                    const modeText = mode === 'picker' ? 'vùng chọn' : 'toàn bộ';
+                    const chunkText = needsChunking ? `[Part ${partNumber}] ` : '';
+                    await updateStatusText(`⚡ Đang tải ${modeText} ${chunkText}(${completedInChunk}/${chunk.length})\n❌ Lỗi: ${globalErrorCount}`);
 
                     activeWorkers--;
                     nextTask();
@@ -390,25 +442,25 @@
         }
 
         if (globalSuccessCount === 0) {
-            alert('Không có ảnh nào tải thành công. Vui lòng kiểm tra lại!');
+            await updateStatusText('❌ Thất bại: Không có dữ liệu ảnh nào tải thành công.', 'error');
         } else {
-            updateBtnText(globalErrorCount > 0 ? `Xong! (Lỗi ${globalErrorCount} ảnh)` : 'Xong!');
+            const statusMsg = globalErrorCount > 0 ? `✔️ Hoàn tất! (Tải lỗi ${globalErrorCount} ảnh)` : '✔️ Hoàn tất thành công!';
+            await updateStatusText(statusMsg, globalErrorCount > 0 ? 'error' : 'success');
         }
 
         if (failedImages.length > 0) {
             console.warn('--- DANH SÁCH ẢNH TẢI LỖI ---');
             console.warn(failedImages.join('\n'));
-            alert(`Có ${globalErrorCount} ảnh bị lỗi không tải được. Vui lòng mở Console (F12) để xem danh sách link chi tiết!`);
+            alert(`Có ${globalErrorCount} ảnh không thể tải. Chi tiết liên kết lỗi đã xuất tại Developer Console (F12)!`);
         }
 
-        setTimeout(() => {
-            updateBtnText('Download ZIP');
-            btn.disabled = false;
-            isDownloading = false;
-        }, 4000);
+        hideStatusPanel(5000);
+        btn.disabled = false;
+        pickBtn.disabled = false;
+        isDownloading = false;
     }
 
-    // === Hàm tìm parent tối ưu (gần nhất có ≥2 ảnh, leo tối đa 3 cấp) ===
+    // === Hàm tìm parent tối ưu (Không giới hạn cấp) ===
     function findBestParent(element) {
         let img = element;
         if (img.tagName !== 'IMG') {
@@ -417,20 +469,18 @@
             else return element;
         }
 
-        let current = img;
-        let maxLevel = 3;
-        let level = 0;
+        let current = img.parentElement;
+        let bestParent = current || img;
 
-        while (current && current !== document.body && level < maxLevel) {
+        while (current && current !== document.body && current !== document.documentElement) {
             const imgCount = current.querySelectorAll('img').length;
             if (imgCount >= 2) {
-                return current;
+                bestParent = current;
+                break;
             }
             current = current.parentElement;
-            level++;
         }
-
-        return img.parentElement || img;
+        return bestParent;
     }
 
     // === Hàm chọn element (Picker) với tooltip hiển thị parent ===
@@ -438,29 +488,25 @@
         if (pickerActive || isDownloading) return;
         pickerActive = true;
 
-        // Overlay mờ
         const overlay = document.createElement('div');
         overlay.id = 'picker-overlay';
         overlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.1); z-index: 10000;
-            pointer-events: none;
+            background: rgba(0,0,0,0.1); z-index: 10000; pointer-events: none;
         `;
         document.body.appendChild(overlay);
 
-        // Hướng dẫn
         const hint = document.createElement('div');
-        hint.textContent = 'Click vào ảnh hoặc container chứa ảnh (ESC để hủy)';
+        hint.textContent = '🎯 Chọn vùng chứa ảnh cần tải (Bấm ESC để hủy)';
         hint.style.cssText = `
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #000; color: #fff; padding: 10px 20px;
-            border-radius: 5px; z-index: 10001;
-            font-size: 16px; font-family: sans-serif;
-            pointer-events: none;
+            background: #28a745; color: #fff; padding: 10px 20px;
+            border-radius: 5px; z-index: 10001; font-size: 15px;
+            font-family: sans-serif; pointer-events: none; font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         `;
         document.body.appendChild(hint);
 
-        // Tooltip
         const tooltip = document.createElement('div');
         tooltip.id = 'picker-tooltip';
         tooltip.style.cssText = `
@@ -470,8 +516,7 @@
             font-size: 13px; font-family: monospace;
             z-index: 10002; pointer-events: none;
             max-width: 500px; white-space: pre-wrap;
-            display: none;
-            border: 2px solid #ff0000;
+            display: none; border: 2px solid #ff0000;
             box-shadow: 0 0 10px rgba(255,0,0,0.5);
         `;
         document.body.appendChild(tooltip);
@@ -514,7 +559,7 @@
             if (!el ||
                 el === overlay || el === hint ||
                 el.closest('#picker-overlay') || el.closest('#picker-hint') || el.closest('#picker-tooltip') ||
-                el.closest('#custom-btn-download') || el.closest('#pick-btn')) {
+                el.closest('#download-status-panel') || el.closest('#custom-btn-download') || el.closest('#pick-btn')) {
                 clearHighlight();
                 return;
             }
@@ -535,7 +580,7 @@
             if (!el ||
                 el === overlay || el === hint ||
                 el.closest('#picker-overlay') || el.closest('#picker-hint') || el.closest('#picker-tooltip') ||
-                el.closest('#custom-btn-download') || el.closest('#pick-btn')) {
+                el.closest('#download-status-panel') || el.closest('#custom-btn-download') || el.closest('#pick-btn')) {
                 return;
             }
 
@@ -549,12 +594,8 @@
                 parent = findBestParent(el);
             }
             images = parent.querySelectorAll('img');
-            if (!images.length) {
-                alert('Không tìm thấy ảnh nào trong vùng chọn!');
-                return;
-            }
 
-            // Dọn dẹp
+            // Dọn dẹp cấu trúc Picker gỡ khỏi DOM
             clearHighlight();
             document.body.removeChild(overlay);
             document.body.removeChild(hint);
@@ -563,6 +604,11 @@
             document.removeEventListener('click', onPick, true);
             document.removeEventListener('keydown', onKey);
             pickerActive = false;
+
+            if (!images.length) {
+                alert('Không tìm thấy ảnh nào trong vùng chọn!');
+                return;
+            }
 
             downloadImages(images, 'picker');
         };
@@ -585,7 +631,6 @@
         document.addEventListener('keydown', onKey);
     }
 
-    // Gán sự kiện
     btn.onclick = async () => {
         if (isDownloading) return;
         await downloadImages(null, 'all');
@@ -593,7 +638,7 @@
 
     pickBtn.onclick = startElementPicker;
 
-    // History hook
+    // History hook kiểm tra URL ảo
     const setupHistoryHook = () => {
         const wrapHistoryMethod = (method) => {
             const original = history[method];
@@ -616,7 +661,6 @@
 
         window.addEventListener('urlchange', checkBtnVisibility);
         window.addEventListener('popstate', checkBtnVisibility);
-
         checkBtnVisibility();
     };
 
