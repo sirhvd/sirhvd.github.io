@@ -14,15 +14,109 @@
 // @match       https://hentai18.net/*
 // @include     /^[^:]*?:\/\/[^\/]*?hentai[^\/]*?\/.*?$/
 // @grant       GM_xmlhttpRequest
-// @version     1.7.1
+// @connect     *
+// @run-at      document-start
+// @version     1.7.2
 // @require     https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @downloadURL https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.user.js
 // @updateURL   https://raw.githubusercontent.com/sirhvd/sirhvd.github.io/refs/heads/main/taihen_image_download.meta.js
 // @author      HVD
 // ==/UserScript==
 
+// ====== PART 1: Image Interceptor - chạy trước mọi JS của trang ======
+// Bọk browser fetch ảnh, tự fetch bằng GM (token 1 lần dùng) rồi hiển bằng blob URL
+const _TAIHEN = (() => {
+    const PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    const cache   = new Map(); // abs URL → Uint8Array | 'pending' | null
+    const waiters = new Map(); // abs URL → Set<imgEl>
+    const blobs   = new Map(); // abs URL → blob: URL
+
+    const norm = (u) => { try { return new URL(u, location.href).href; } catch { return u; } };
+    const mime = (u) => /\.png(\?|$)/i.test(u) ? 'image/png' : /\.webp(\?|$)/i.test(u) ? 'image/webp' : 'image/jpeg';
+
+    const _srcDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+
+    const setBlobSrc = (imgEl, abs, data) => {
+        let blobUrl = blobs.get(abs);
+        if (!blobUrl) {
+            blobUrl = URL.createObjectURL(new Blob([data], { type: mime(abs) }));
+            blobs.set(abs, blobUrl);
+        }
+        if (_srcDesc) _srcDesc.set.call(imgEl, blobUrl);
+    };
+
+    const onDone = (abs, data) => {
+        cache.set(abs, data || null);
+        const imgs = waiters.get(abs);
+        if (!imgs) return;
+        waiters.delete(abs);
+        imgs.forEach(imgEl => {
+            if (data instanceof Uint8Array) setBlobSrc(imgEl, abs, data);
+            else if (_srcDesc) _srcDesc.set.call(imgEl, abs); // fallback: bảo browser load lại
+        });
+    };
+
+    const doFetch = (abs, imgEl) => {
+        if (!waiters.has(abs)) waiters.set(abs, new Set());
+        if (imgEl) waiters.get(abs).add(imgEl);
+        cache.set(abs, 'pending');
+        let resolved = false;
+        const safe = (data) => { if (!resolved) { resolved = true; onDone(abs, data); } };
+        const fallback = setTimeout(() => safe(null), 20000);
+        GM_xmlhttpRequest({
+            method: 'GET', url: abs, responseType: 'arraybuffer', timeout: 15000,
+            headers: {
+                'Referer': location.href, 'Origin': location.origin,
+                'User-Agent': navigator.userAgent,
+                'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+                'Cache-Control': 'no-cache', 'Cookie': document.cookie
+            },
+            onload(res) {
+                clearTimeout(fallback);
+                try { safe(res.status === 200 && res.response ? new Uint8Array(res.response) : null); }
+                catch(e) { safe(null); }
+            },
+            onerror()   { clearTimeout(fallback); safe(null); },
+            ontimeout() { clearTimeout(fallback); safe(null); },
+            onabort()   { clearTimeout(fallback); safe(null); }
+        });
+    };
+
+    if (_srcDesc && _srcDesc.set) {
+        Object.defineProperty(HTMLImageElement.prototype, 'src', {
+            set(val) {
+                if (!val || val.startsWith('data:') || val.startsWith('blob:')) {
+                    _srcDesc.set.call(this, val); return;
+                }
+                const abs = norm(val);
+                const cached = cache.get(abs);
+                if (cached instanceof Uint8Array)  { setBlobSrc(this, abs, cached); }
+                else if (cached === 'pending')      { _srcDesc.set.call(this, PLACEHOLDER); waiters.get(abs)?.add(this); }
+                else                                { _srcDesc.set.call(this, PLACEHOLDER); doFetch(abs, this); }
+            },
+            get() { return _srcDesc.get.call(this); },
+            configurable: true
+        });
+    }
+
+    // setAttribute('src') cũng cần intercept
+    const _origSetAttr = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function(name, value) {
+        if (this instanceof HTMLImageElement && name === 'src') { this.src = value; return; }
+        _origSetAttr.call(this, name, value);
+    };
+
+    return { cache, norm };
+})();
+
+// ====== PART 2: Main Script ======
 (async function () {
     'use strict';
+
+    // Đợi DOM sẵn sàng (vì @run-at document-start)
+    if (document.readyState === 'loading') {
+        await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
+    }
 
     const MAX_PER_ZIP = 250;
     const MAX_CONCURRENT = 15;
@@ -161,6 +255,10 @@
                     results.add(url.replace(/\/\/t(\d+)/, '//i$1').replace(/t(\.[a-zA-Z]+)$/, '$1'));
                 }
 
+                if (results.size === 0) {
+                    results.add(url);
+                }
+
                 return Array.from(results);
             },
             fallbackServers: true
@@ -245,6 +343,12 @@
     // === Hàm fetchImageData với cookie và header đầy đủ ===
     const fetchImageData = (url) => {
         return new Promise((resolve) => {
+            // Safety-net: nếu GM_xmlhttpRequest không gọi callback nào (bị chặn im lặng)
+            // Promise vẫn resolve sau 20s thay vì treo vĩnh viễn
+            let resolved = false;
+            const safeResolve = (val) => { if (!resolved) { resolved = true; resolve(val); } };
+            const fallbackTimer = setTimeout(() => safeResolve({ data: null, status: 0 }), 20000);
+
             GM_xmlhttpRequest({
                 method: "GET",
                 url: url,
@@ -258,13 +362,25 @@
                     "Cache-Control": "no-cache",
                     "Cookie": document.cookie
                 },
-                onload: (res) => resolve({ data: res.status === 200 ? new Uint8Array(res.response) : null, status: res.status }),
-                onerror: () => resolve({ data: null, status: 0 }),
-                ontimeout: () => resolve({ data: null, status: 0 }),
-                onabort: () => resolve({ data: null, status: 0 })
+                onload: (res) => {
+                    clearTimeout(fallbackTimer);
+                    try {
+                        const data = res.status === 200 && res.response ? new Uint8Array(res.response) : null;
+                        safeResolve({ data, status: res.status });
+                    } catch (e) {
+                        safeResolve({ data: null, status: res.status });
+                    }
+                },
+                onerror:   () => { clearTimeout(fallbackTimer); safeResolve({ data: null, status: 0 }); },
+                ontimeout: () => { clearTimeout(fallbackTimer); safeResolve({ data: null, status: 0 }); },
+                onabort:   () => { clearTimeout(fallbackTimer); safeResolve({ data: null, status: 0 }); }
             });
         });
     };
+
+    // imageCache và normalizeUrl dùng _TAIHEN từ interceptor
+    const imageCache  = _TAIHEN.cache;
+    const normalizeUrl = _TAIHEN.norm;
 
     const createZipAsync = async (zipData, filename) => {
         return new Promise(async (resolve, reject) => {
@@ -354,13 +470,28 @@
                     activeWorkers++;
 
                     const { img, index: i } = task;
-                    const src = img.getAttribute('data-src') || img.getAttribute('src') || img.currentSrc || img.href;
+
+                    // Ưu tiên currentSrc: là URL browser đang thực sự render,
+                    // chứa token còn hiệu lực tại thời điểm này.
+                    // data-src/src có thể là URL cũ/thumbnail chưa có token.
+                    const currentSrc = img.currentSrc;
+                    const isLiveSrc = currentSrc && !currentSrc.startsWith('data:') && currentSrc.trim() !== '';
+                    const rawSrc = img.getAttribute('data-src') || img.getAttribute('src') || currentSrc || img.href;
+                    const src = isLiveSrc ? currentSrc : rawSrc;
+
+                    // Nếu dùng currentSrc (có token) → không qua processUrls vì có thể strip token
+                    // Nếu dùng rawSrc (lazy/thumbnail) → vẫn dùng processUrls như cũ
+                    const useProcessUrls = !isLiveSrc;
 
                     if (src) {
-                        let urlsToTry = currentConfig.processUrls ? currentConfig.processUrls(src) : [src];
+                        // Nếu có currentSrc (token live) → dùng trực tiếp, không qua processUrls
+                        // Nếu không có → dùng processUrls để transform thumbnail → full-size
+                        let urlsToTry = (useProcessUrls && currentConfig.processUrls)
+                            ? currentConfig.processUrls(src)
+                            : [src];
                         const originalUrlsCount = urlsToTry.length;
 
-                        if (lastSuccessfulExt && urlsToTry.length > 1) {
+                        if (useProcessUrls && lastSuccessfulExt && urlsToTry.length > 1) {
                             urlsToTry.sort((a, b) => {
                                 const aHasExt = a.includes(lastSuccessfulExt);
                                 const bHasExt = b.includes(lastSuccessfulExt);
@@ -370,7 +501,7 @@
                             });
                         }
 
-                        if (currentConfig.fallbackServers && urlsToTry.length > 0) {
+                        if (useProcessUrls && currentConfig.fallbackServers && urlsToTry.length > 0) {
                             const match = urlsToTry[0].match(/\/\/([a-z]+)(\d*)\./i);
                             if (match) {
                                 const [_, prefix, num] = match;
@@ -382,17 +513,56 @@
                         let downloadedData = null;
                         let finalUrl = '';
 
+                        // === Kiểm tra imageCache trước - data được bắt khi img.src được set ===
+                        const lookupUrls = [src, img.currentSrc, img.getAttribute('src')]
+                            .filter(Boolean)
+                            .map(u => normalizeUrl(u));
+
+                        for (const lu of lookupUrls) {
+                            const cached = imageCache.get(lu);
+                            if (cached instanceof Uint8Array && cached.length > 0) {
+                                downloadedData = cached;
+                                finalUrl = lu;
+                                break;
+                            }
+                        }
+
+                        // Nếu chưa có trong cache (pending hoặc mời set) → đợi tối đa 3s
+                        if (!downloadedData) {
+                            for (const lu of lookupUrls) {
+                                if (imageCache.get(lu) === 'pending') {
+                                    for (let w = 0; w < 6; w++) {
+                                        await new Promise(r => setTimeout(r, 500));
+                                        const cached = imageCache.get(lu);
+                                        if (cached instanceof Uint8Array && cached.length > 0) {
+                                            downloadedData = cached;
+                                            finalUrl = lu;
+                                            break;
+                                        }
+                                    }
+                                    if (downloadedData) break;
+                                }
+                            }
+                        }
+
+                        // Fallback: fetch trực tiếp nếu cache miss hoàn toàn
+                        if (!downloadedData) {
                         for (let urlIdx = 0; urlIdx < urlsToTry.length; urlIdx++) {
                             const targetUrl = urlsToTry[urlIdx];
                             let retries = urlIdx < originalUrlsCount ? 3 : 1;
 
                             while (retries > 0) {
                                 const res = await fetchImageData(targetUrl);
-                                if (res.data.length === 0) break;
-                                if (res.data) { downloadedData = res.data; finalUrl = targetUrl; break; }
-                                if (res.status === 404) break;
-                                retries--;
-                                if (retries > 0) await new Promise(r => setTimeout(r, 2000));
+                                // Fix: kiểm tra null TRƯỚC khi truy cập .length
+                                if (!res.data || res.data.length === 0) {
+                                    if (res.status === 404) { retries = 0; break; }
+                                    retries--;
+                                    if (retries > 0) await new Promise(r => setTimeout(r, 2000));
+                                    continue;
+                                }
+                                downloadedData = res.data;
+                                finalUrl = targetUrl;
+                                break;
                             }
 
                             if (downloadedData) {
@@ -401,6 +571,7 @@
                                 break;
                             }
                         }
+                        } // end fallback
 
                         if (downloadedData) {
                             const ext = finalUrl.match(/\.(jpg|jpeg|png|webp)/i)?.[0] || '.jpg';
@@ -409,7 +580,7 @@
                             globalSuccessCount++;
                         } else {
                             globalErrorCount++;
-                            const processedUrlLog = (currentConfig.processUrls ? currentConfig.processUrls(src) : [src])[0];
+                            const processedUrlLog = (useProcessUrls && currentConfig.processUrls ? currentConfig.processUrls(src) : [src])[0];
                             failedImages.push(`Ảnh ${i + 1} - Link process: ${processedUrlLog}`);
                             console.warn(`Bỏ qua ảnh ${i + 1} (Link: ${processedUrlLog})`);
                         }
@@ -421,11 +592,13 @@
                     await updateStatusText(`⚡ Đang tải ${modeText} ${chunkText}(${completedInChunk}/${chunk.length})\n❌ Lỗi: ${globalErrorCount}`);
 
                     activeWorkers--;
-                    nextTask();
+                    nextTask(); // Gọi trực tiếp, không dùng setTimeout để tránh deadlock
                 };
 
+                const STAGGER_MS = 200; // Delay giữa các lần khởi động worker
                 for (let w = 0; w < MAX_CONCURRENT && w < chunk.length; w++) {
-                    nextTask();
+                    // Stagger đúng: worker w bắt đầu sau w * STAGGER_MS
+                    setTimeout(() => nextTask(), w * STAGGER_MS);
                 }
             });
 
