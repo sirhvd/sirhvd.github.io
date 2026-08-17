@@ -1,3 +1,6 @@
+facebook.com##div[style*="--x-height"] > div[style*="--x-height"]:has(span:has-text(/^(Ad|Sponsored|Được tài trợ)$/)):remove()
+facebook.com##:xpath(//div[contains(concat(' ', normalize-space(@class), ' '), ' x1lliihq ') and .//a[contains(@href, '/ads/about/')]]):remove()
+
 anime47.*###\37 28_90
 anime47.*##.swiper-container
 
